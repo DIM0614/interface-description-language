@@ -1,0 +1,38 @@
+{
+  "name": "Math",
+  "description": "Provides mathematical methods",
+  "operations":
+  [
+    {
+      "name": "pi",
+      "description": "Returns the value of pi given a precision",
+      "return": "float",
+      "params":
+      [
+        {
+          "name": "precision",
+          "type": "float",
+          "description": "Desired precision"
+        }
+      ]
+    },
+    {
+      "name": "fibonacci",
+      "description": "Returns the i-th element of the fibonacci sequence",
+      "return": "int",
+      "params":
+      [
+        {
+          "name": "start",
+          "type": "int",
+          "description": "Starting number of the sequence"
+        },
+        {
+          "name": "i",
+          "type": "int",
+          "description": "Desired element"
+        }
+      ]
+    }
+  ]
+}
