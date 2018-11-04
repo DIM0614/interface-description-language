@@ -22,9 +22,12 @@ public class Main {
             JSONObject jsonObject = (JSONObject) obj;
             Path path = Paths.get(interfaceURL);
             generator.generateInterface(jsonObject, path);
+            generator.generateClass(jsonObject, path);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
