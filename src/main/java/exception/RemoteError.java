@@ -1,3 +1,5 @@
+package exception;
+
 /**
  * This class represents an error that occurred
  * at some point in the remote communication.

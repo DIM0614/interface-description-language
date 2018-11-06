@@ -1,4 +1,8 @@
+package implementation;
+
 import com.squareup.javapoet.*;
+import interfaces.Requestor;
+import model.AbsoluteObjectReference;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -7,6 +11,12 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.ArrayList;
+
+/**
+ * This class generate interfaces, client proxies and invokers.
+ *
+ * @author Vinícius Campos
+ */
 
 public class Generator {
 
@@ -43,7 +53,9 @@ public class Generator {
                     .returns(getType(methodReturn))
                     .addParameters(parameters)
                     .addJavadoc(methodDescription)
-                    .addException(ClassName.get("", "RemoteError")) // change the real package name of class RemoteError
+                    .addException(ClassName.get("", "exception.RemoteError")) // change the real package name of class exception.RemoteError
+                    .addException(IOException.class)
+                    .addException(ClassNotFoundException.class)
                     .build();
             ((ArrayList<MethodSpec>) methods).add(ms);
         }
@@ -54,18 +66,18 @@ public class Generator {
                 .addJavadoc(interfaceDescription)
                 .build();
 
-        JavaFile javaFile = JavaFile.builder("", interfaceType)
+        JavaFile javaFile = JavaFile.builder("generated", interfaceType)
                 .build();
 
         javaFile.writeTo(path);
     }
 
-    public void generateClass(JSONObject file, Path path) throws IOException, ClassNotFoundException {
+    public void generateClass(JSONObject file, Path path) throws IOException {
         String className = (String )file.get("name");
         String classDescription = (String )file.get("description");
 
         JSONArray operations = (JSONArray) file.get("operations");
-        Iterable<MethodSpec> methods = new ArrayList<MethodSpec>();
+        Iterable<MethodSpec> methods = new ArrayList<>();
         for(int i = 0; i < operations.size(); ++i){
             JSONObject method = (JSONObject) operations.get(i);
             String methodName = (String) method.get("name");
@@ -74,6 +86,7 @@ public class Generator {
 
             JSONArray params = (JSONArray) method.get("params");
             Iterable<ParameterSpec> parameters = new ArrayList<ParameterSpec>();
+            String stringParams = "";
             for (int j = 0; j < params.size(); j++) {
                 JSONObject param = (JSONObject) params.get(j);
                 String paramName = (String) param.get("name");
@@ -84,6 +97,10 @@ public class Generator {
 
                 ParameterSpec ps = ParameterSpec.builder(getType(paramType), paramName).build();
                 ((ArrayList<ParameterSpec>) parameters).add(ps);
+
+                stringParams += paramName;
+                if(j + 1 < params.size())
+                    stringParams += ",";
             }
 
             methodDescription += "\n@return " + methodReturn;
@@ -92,21 +109,42 @@ public class Generator {
                     .addModifiers(Modifier.PUBLIC)
                     .returns(getType(methodReturn))
                     .addParameters(parameters)
-                    .addStatement("return null")
+                    .addStatement("return " + getCastType(methodReturn) + " r.request(aor,\"" + methodName + "\"," + stringParams + ")")
                     .addJavadoc(methodDescription)
-                    .addException(ClassName.get("", "RemoteError")) // change the real package name of class RemoteError
+                    .addException(ClassName.get("", "exception.RemoteError"))
+                    .addException(IOException.class)
+                    .addException(ClassNotFoundException.class)
                     .build();
             ((ArrayList<MethodSpec>) methods).add(ms);
         }
 
-        TypeSpec classType = TypeSpec.classBuilder("ClientProxy" + className)
+        // Creating fields of aor and requestor
+        FieldSpec aor = FieldSpec.builder(AbsoluteObjectReference.class, "aor")
+                .addModifiers(Modifier.PRIVATE)
+                .build();
+        FieldSpec r = FieldSpec.builder(Requestor.class, "r")
+                .addModifiers(Modifier.PRIVATE)
+                .build();
+
+        // Defining constructor of class
+        MethodSpec constructor = MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
+                .addParameter(AbsoluteObjectReference.class, "aor")
+                .addStatement("this.aor = aor")
+                .addStatement("this.r = new $T()", UnsyncRequestor.class)
+                .build();
+
+        TypeSpec classType = TypeSpec.classBuilder("Client" + className)
+                .addModifiers(Modifier.PUBLIC)
+                .addField(aor)
+                .addField(r)
+                .addMethod(constructor)
                 .addMethods(methods)
                 .addJavadoc(classDescription)
                 .addSuperinterface(ClassName.get("", className))
                 .build();
 
-        JavaFile javaFile = JavaFile.builder("", classType)
+        JavaFile javaFile = JavaFile.builder("generated", classType)
                 .build();
 
         javaFile.writeTo(path);
@@ -126,6 +164,22 @@ public class Generator {
         }
 
         return String.class;
+    }
+
+    private String getCastType(String type){
+        if(type.equals("int")){
+            return "(Integer)";
+        }else if(type.equals("float")){
+            return "(Float)";
+        }else if(type.equals("boolean")){
+            return "(Boolean)";
+        }else if(type.equals("string")){
+            return "(String)";
+        }else if(type.equals("char")){
+            return "(Character)";
+        }
+
+        return "(String)";
     }
 
 }
