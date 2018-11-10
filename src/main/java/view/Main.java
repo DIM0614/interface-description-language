@@ -25,6 +25,8 @@ public class Main {
             Path path = Paths.get(interfaceURL);
             generator.generateInterface(jsonObject, path);
             generator.generateClass(jsonObject, path);
+            generator.generateInvoker(jsonObject, path);
+            System.out.println("oxe?");
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
