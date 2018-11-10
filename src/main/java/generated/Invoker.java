@@ -16,6 +16,14 @@ public abstract class Invoker implements Math {
     this.id = id;
   }
 
+  public Integer getId() {
+    return id;
+  }
+
+  public void setId(Integer id) {
+    this.id =  id;
+  }
+
   /**
    * Returns the value of pi given a precision
    * @param precision Desired precision

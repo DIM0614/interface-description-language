@@ -229,11 +229,25 @@ public class Generator {
                 .addParameter(Integer.class, "id")
                 .addStatement("this.id = id")
                 .build();
+        
+        MethodSpec getId = MethodSpec.methodBuilder("getId")
+        				             .addModifiers(Modifier.PUBLIC)
+        				             .returns(Integer.class)
+        				             .addStatement("return id")
+        				             .build();
+        
+        MethodSpec setId = MethodSpec.methodBuilder("setId")
+	             .addModifiers(Modifier.PUBLIC)
+	             .addParameter(Integer.class, "id")
+	             .addStatement("this.id =  id")
+	             .build();
 
         TypeSpec classType = TypeSpec.classBuilder("Invoker")
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                 .addField(id)
                 .addMethod(constructor)
+                .addMethod(getId)
+                .addMethod(setId)
                 .addMethods(methods)
                 .addMethod(invoke.build())
                 .addJavadoc(classDescription)
